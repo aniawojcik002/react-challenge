@@ -1,0 +1,55 @@
+{
+  "name": "challenge",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/DareIT-poland/challenge.git",
+  "author": "Adriana Olszak <adriana.olszak@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.24.0",
+    "cypress": "^9.1.0",
+    "prettier": "2.5.1"
+  },
+  "scripts": {
+    "postinstall": "run-p -l install:server install:client",
+    "prepare": "husky install",
+    "lint:fix": "run-p -l lint:client:fix lint:server:fix",
+    "lint:check": "run-p -l lint:client:check lint:server:check",
+    "format:fix": "run-p -l format:client:fix format:server:fix",
+    "format:check": "run-p -l format:client:check format:server:check",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "start": "run-p -l start:server start:client",
+    "start:ci": "run-p -l start:server:ci start:client:ci",
+    "test": "cd client && npm run test",
+    "build": "run-p -l build:server build:client",
+    "lint:server:fix": "npm run lint:fix --prefix server",
+    "lint:client:fix": "npm run lint:fix --prefix client",
+    "lint:server:check": "npm run lint:check --prefix server",
+    "lint:client:check": "npm run lint:check --prefix client",
+    "format:server:fix": "npm run format:fix --prefix server",
+    "format:client:fix": "npm run format:fix --prefix client",
+    "format:server:check": "npm run format:check --prefix server",
+    "format:client:check": "npm run format:check --prefix client",
+    "install:server": "cd server && npm install",
+    "install:client": "cd client && npm install",
+    "start:server": "npm run start:dev --prefix server",
+    "start:client": "npm run start --prefix client",
+    "start:server:ci": "npm run start --prefix server",
+    "start:client:ci": "npm run start --prefix client",
+    "build:server": "cd server && npm run build",
+    "build:client": "cd client && npm run build",
+    "storybook": "cd client && npm run storybook"
+  },
+  "devDependencies": {
+    "npm-run-all": "4.1.5",
+    "husky": "7.0.4"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,yml,yaml}": [
+      "eslint --cache --fix",
+      "jest --findRelatedTests"
+    ],
+    "*.{js,jsx,ts,tsx,css,md}": "prettier --write"
+  }
+}

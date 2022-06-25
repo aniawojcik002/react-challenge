@@ -1,0 +1,25 @@
+{
+  "extends": ["config:base", ":timezone(Europe/Berlin)"],
+  "schedule": ["before 3am on Monday"],
+  "packageRules": [
+    { "groupName": "grover terraform", "matchManagers": ["terraform"] },
+    {
+      "matchPackagePatterns": ["*"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-minor-patch",
+      "labels": ["dependencies"]
+    },
+    {
+      "matchPackagePatterns": ["*"],
+      "matchUpdateTypes": ["major"],
+      "labels": ["dependencies", "breaking"]
+    },
+    {
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["node"],
+      "labels": ["dependencies", "breaking"]
+    }
+  ],
+  "reviewersFromCodeOwners": true
+}

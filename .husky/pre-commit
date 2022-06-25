@@ -1,0 +1,9 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+npm run format:fix --prefix server
+npm run format:fix --prefix client
+npm run lint:check --prefix server
+npm run lint:check --prefix client
+npm run format:check --prefix server
+npm run format:check --prefix client

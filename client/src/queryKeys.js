@@ -1,0 +1,4 @@
+export const BUDGET_QUERY = 'BUDGET_QUERY';
+export const CATEGORIES_QUERY = 'CATEGORIES_QUERY';
+export const LEDGER_QUERY = 'LEDGER_QUERY';
+export const SUMMARY_QUERY = 'SUMMARY_QUERY';

@@ -1,0 +1,130 @@
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    types: [ opened, synchronize, edited ]
+  pull_request_target:
+    types: [ opened, synchronize, edited ]
+
+name: CI
+
+env:
+  PR_ARTIFACT_FILE: "${{ github.event.pull_request.number }}.txt"
+
+jobs:
+  install-deps:
+    if: ${{ github.event.action != 'edited' }}
+    name: Install dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js 14.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        id: cache-deps
+        with:
+          path: |
+            ~/.cache/Cypress
+            node_modules
+            client/node_modules
+            server/node_modules
+          key: ${{ github.sha }}
+
+  e2e:
+    name: End-to-end tests
+    runs-on: ubuntu-latest
+    needs: install-deps
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Restore cached dependencies
+        uses: actions/cache@v2
+        id: restore-deps
+        with:
+          path: |
+            ~/.cache/Cypress
+            node_modules
+            client/node_modules
+            server/node_modules
+          key: ${{ github.sha }}
+
+      - name: Setup Node.js 14.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+
+      - name: Run Cypress
+        id: cypress
+        uses: cypress-io/github-action@v2
+        with:
+          install: false
+          video: false
+          start: npm run start:ci
+          wait-on: "http://localhost:3000, http://localhost:4320/swagger/"
+        env:
+          CI: true
+      - name: Upload job status artificat
+        run: echo "${{ steps.cache-deps.outcome }}" > ${{env.PR_ARTIFACT_FILE}}
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{env.PR_ARTIFACT_FILE}}
+          path: ${{env.PR_ARTIFACT_FILE}}
+          retention-days: 14
+
+  successful_artifact:
+    if: ${{ github.event.action == 'edited' && github.event.sender.login != 'renovate[bot]' }}
+    runs-on: ubuntu-latest
+    name: 'Check if should mark as succeeded'
+    outputs:
+      should_run: ${{ steps.artifact-read.outputs.content == 'success' }}
+    steps:
+      - name: Download artifact
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: ci.yml
+          workflow_conclusion: success
+          pr: ${{github.event.pull_request.number}}
+          name: ${{ env.PR_ARTIFACT_FILE }}
+          check_artifacts: true
+          search_artifacts: true
+      - name: Read artifact
+        id: artifact-read
+        uses: juliangruber/read-file-action@v1
+        with:
+          path: ./${{ env.PR_ARTIFACT_FILE }}
+      - name: Echo artifact
+        run: echo "${{ steps.artifact-read.outputs.content }}"
+
+  task_completed:
+    if: ${{ needs.successful_artifact.outputs.should_run && github.event.sender.login != 'renovate[bot]'  }}
+    needs: successful_artifact
+    name: 'Check if all tasks completed'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Task completed
+        id: task_completed
+        uses: kentaro-m/task-completed-checker-action@v0.1.0
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+
+  add_labels:
+    needs: task_completed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions-ecosystem/action-add-labels@v1
+        with:
+          labels: |
+            task-completed
+

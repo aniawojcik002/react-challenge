@@ -1,0 +1,28 @@
+name: 'Notify'
+on:
+  pull_request:
+    types:
+      - labeled
+
+jobs:
+  send_notification:
+    if: github.event.label.name == 'task-completed'
+    name: Send Notification to DareIT
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: challenge-notifications
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_TITLE: ':rocket:'
+          SLACK_MESSAGE: 'Zadanie ukończone!'
+          SLACK_USERNAME: ChallengeBot
+      - name: Post comment
+        uses: KeisukeYamashita/create-comment@v1
+        with:
+          comment: |
+            Rozwiąznie tego zadania zostało zaraportowane dla DareIt! :rocket:
+
